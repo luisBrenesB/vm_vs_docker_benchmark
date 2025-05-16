@@ -4,6 +4,8 @@ import csv
 import os
 import subprocess
 import shutil
+import requests
+import platform
 
 # Duración del benchmark en segundos
 duration = 60
@@ -11,15 +13,38 @@ end_time = time.time() + duration
 
 results = []
 
-# Ruta al juego
+# Obtener la ruta absoluta del directorio actual del script
 script_dir = os.path.dirname(os.path.abspath(__file__))
-game_path = os.path.join(script_dir, "ticTacToe.py")
 
-print(f"⏳ Ejecutando benchmark del juego durante {duration} segundos...")
+# Detectar la ruta correcta del juego ticTacToe_web
+# Intentamos buscar la carpeta 'ticTacToe_web' dentro 'scripts'
+possible_game_dir = os.path.join(script_dir, "ticTacToe_web")
+if not os.path.isdir(possible_game_dir):
+    # Quizás estamos en la raíz y 'scripts/ticTacToe_web'
+    possible_game_dir = os.path.join(script_dir, "scripts", "ticTacToe_web")
+if not os.path.isdir(possible_game_dir):
+    raise FileNotFoundError(f"No se encontró la carpeta ticTacToe_web en: {possible_game_dir}")
 
-# Lanzar el juego como proceso aparte
-proc = subprocess.Popen(['python3', game_path])
+game_dir = possible_game_dir
+app_path = os.path.join(game_dir, "ticTacToe.py")
 
+print(f"⏳ Ejecutando benchmark del juego web durante {duration} segundos...")
+
+# Lanzar el servidor Flask como proceso aparte
+proc = subprocess.Popen(['python', app_path], cwd=game_dir)
+
+# Esperar unos segundos para que el servidor arranque
+time.sleep(5)
+
+# Probar si el servidor responde
+try:
+    response = requests.get("http://127.0.0.1:5000")
+    if response.status_code != 200:
+        print("⚠️ No se pudo acceder al servidor web.")
+except Exception as e:
+    print("⚠️ Error al conectar con el servidor Flask:", e)
+
+# Monitorear uso de recursos durante la ejecución
 while time.time() < end_time and proc.poll() is None:
     cpu = psutil.cpu_percent(interval=0.1)
     mem = psutil.virtual_memory().percent
@@ -28,16 +53,52 @@ while time.time() < end_time and proc.poll() is None:
     print(f"CPU: {cpu}%, MEM: {mem}%")
     time.sleep(0.2)
 
-# Si el juego sigue corriendo, lo terminamos al acabar benchmark
+# Si sigue corriendo, lo terminamos
 if proc.poll() is None:
     proc.terminate()
 
-# Preguntar entorno: VM o Docker
-is_vm = input("¿Se está ejecutando en una VM? (y/n): ").strip().lower() == 'y'
-filename = f"benchmark_ticTacToe_{'vm' if is_vm else 'docker'}.csv"
+# Detectar si estamos dentro de Docker o VM automáticamente
+
+def running_in_docker():
+    """Detecta si está corriendo dentro de un contenedor Docker."""
+    path = '/proc/self/cgroup'
+    if os.path.exists('/.dockerenv'):
+        return True
+    if os.path.isfile(path):
+        with open(path) as f:
+            return any('docker' in line or 'kubepods' in line for line in f)
+    return False
+
+def running_in_vm():
+    """Detecta si está corriendo en VM de forma muy básica (Linux)"""
+    # Esto puede variar, aquí un ejemplo básico con platform
+    # Se puede mejorar con comandos de sistema
+    system = platform.system()
+    if system != 'Linux':
+        return False
+    try:
+        with open('/sys/class/dmi/id/product_name') as f:
+            product_name = f.read().lower()
+            # Algunos nombres comunes de VM:
+            vm_signs = ['virtualbox', 'vmware', 'kvm', 'qemu', 'hyper-v']
+            if any(sign in product_name for sign in vm_signs):
+                return True
+    except Exception:
+        pass
+    return False
+
+if running_in_docker():
+    env = 'docker'
+elif running_in_vm():
+    env = 'vm'
+else:
+    env = input("¿Se está ejecutando en una VM? (y/n): ").strip().lower()
+    env = 'vm' if env == 'y' else 'docker'
+
+filename = f"benchmark_ticTacToe_{env}.csv"
 filepath = os.path.join(script_dir, "..", "results", filename)
 
-# Guardar CSV con resultados
+# Guardar resultados
 os.makedirs(os.path.dirname(filepath), exist_ok=True)
 with open(filepath, "w", newline="") as f:
     writer = csv.writer(f)
