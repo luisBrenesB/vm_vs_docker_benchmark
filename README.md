@@ -1,109 +1,108 @@
-# Proyecto de Evaluación Comparativa de Rendimiento: Máquina Virtual vs Docker
+# Proyecto de Evaluación Comparativa de Rendimiento: Máquina Virtual vs Docker 
 
 ## 1. Introducción: ¿Qué son las máquinas virtuales y los contenedores?
 
 ### Máquinas Virtuales (VM)
 
-Una máquina virtual (VM) es una emulación de un sistema computacional completo que se ejecuta sobre un hardware físico, permitiendo correr múltiples sistemas operativos independientes en una misma máquina física (host). Este aislamiento es posible gracias a un software llamado hipervisor o monitor de máquina virtual, que gestiona y asigna los recursos físicos de hardware entre varias VMs.
+Una máquina virtual (VM) es una emulación de un sistema computacional completo que se ejecuta sobre un hardware físico, permitiendo correr múltiples sistemas operativos independientes en una misma máquina física (host). Este aislamiento es posible gracias a un software llamado **hipervisor**, que gestiona y asigna los recursos físicos entre varias VMs.
 
-Existen dos tipos principales de hipervisores:
+Tipos de hipervisores:
 
-- Tipo 1 (bare-metal): Se ejecutan directamente sobre el hardware físico. Ejemplos incluyen VMware ESXi, Microsoft Hyper-V, y Xen.
-- Tipo 2 (hosted): Se ejecutan sobre un sistema operativo ya instalado en el host, como VirtualBox o VMware Workstation.
+- **Tipo 1 (bare-metal):** Se ejecutan directamente sobre el hardware (VMware ESXi, Microsoft Hyper-V, Xen).
+- **Tipo 2 (hosted):** Se ejecutan sobre un sistema operativo anfitrión (VirtualBox, VMware Workstation).
 
-Cada VM contiene su propio kernel, sistema operativo y espacio de usuario, asegurando un fuerte aislamiento entre máquinas. Esto hace que las VMs sean ideales para ejecutar diferentes sistemas operativos o entornos aislados para pruebas, desarrollo o producción.
+Cada VM contiene su propio kernel, sistema operativo y espacio de usuario, asegurando un fuerte aislamiento. Esto las hace ideales para pruebas, desarrollo y producción con distintos sistemas operativos.
 
-Sin embargo, esta independencia implica que las máquinas virtuales suelen consumir más recursos, tienen un tiempo de arranque más prolongado y una sobrecarga adicional por la virtualización del hardware.
+**Desventajas:** alto consumo de recursos, mayor tiempo de arranque y sobrecarga por virtualización.
 
-**Referencia:** Smith, J. & Nair, R. (2005). The architecture of virtual machines. Computer, 38(5), 32-38.
+> Referencia: Smith, J. & Nair, R. (2005). *The architecture of virtual machines*. *Computer*, 38(5), 32-38.
 
-### Contenedores Docker
+### Contenedores Docker (en Codespace)
 
-Los contenedores, como los que proporciona Docker, representan un enfoque diferente a la virtualización. En lugar de virtualizar hardware completo, los contenedores virtualizan a nivel de sistema operativo utilizando características del kernel Linux como namespaces y cgroups. Esto permite que múltiples contenedores compartan el mismo kernel del host, pero manteniendo aislamiento de procesos, red y sistema de archivos.
+Los contenedores virtualizan a nivel de sistema operativo usando funciones como `namespaces` y `cgroups`, permitiendo ejecutar múltiples contenedores aislados que comparten el mismo kernel.
 
-Los contenedores son mucho más ligeros, se inician muy rápido y facilitan la portabilidad y escalabilidad de aplicaciones. Además, el ecosistema Docker incluye herramientas para construir, distribuir y ejecutar aplicaciones de manera uniforme y reproducible.
+En este proyecto se usó **GitHub Codespaces**, un entorno cloud que permite usar Docker sin configuración local, con arranque inmediato y bajo uso de recursos.
 
-No obstante, dado que comparten kernel, la seguridad y el aislamiento no son tan estrictos como en una VM. Esto puede representar un riesgo en entornos con requisitos estrictos de seguridad.
+**Ventajas:** ligeros, rápidos, portables y adecuados para CI/CD.
 
-**Referencia:** Merkel, D. (2014). Docker: lightweight Linux containers for consistent development and deployment. Linux Journal, 2014(239), 2.
+**Desventajas:** menor aislamiento y seguridad comparado con una VM.
+
+> Referencia: Merkel, D. (2014). *Docker: lightweight Linux containers for consistent development and deployment*. *Linux Journal*, 2014(239), 2.
+
+---
 
 ## 2. Configuración del entorno de prueba
 
-Para esta evaluación comparativa, se utilizó un equipo host con las siguientes características:
+**Equipo host:**
 
-- Procesador: Intel Core i7-9750H
-- Memoria RAM: 16GB DDR4
-- Sistema Operativo Host: Ubuntu 20.04 LTS
+- Procesador: Intel Core i7-9750H  
+- Memoria RAM: 16GB DDR4  
+- Sistema Operativo Host: Ubuntu 20.04 LTS  
 
-Para la máquina virtual, se utilizó VirtualBox con:
+**Máquina Virtual:**
 
-- Sistema Operativo invitado: Ubuntu 20.04 LTS
-- 2 CPUs asignados
-- 4GB RAM asignados
+- VirtualBox con Ubuntu 20.04 LTS  
+- 2 CPUs, 4GB RAM asignados  
 
-Para Docker:
+**Contenedor Docker (en Codespace):**
 
-- Imagen base: ubuntu:20.04
-- Configuración por defecto para contenedor (2 CPUs, 4GB RAM limitados)
+- Imagen base: `ubuntu:20.04`  
+- 2 CPUs, 4GB RAM limitados por configuración  
 
-La aplicación utilizada para la prueba fue un juego sencillo (ticTacToe) desarrollado en Python, ejecutado en ambos entornos para comparar el rendimiento y consumo de recursos bajo carga similar.
+**Aplicación usada:** Juego de TicTacToe en Python, ejecutado en ambos entornos para comparar el rendimiento bajo una misma carga.
+
+---
 
 ## 3. Métricas y herramientas utilizadas
 
-Las principales métricas evaluadas fueron:
+**Métricas analizadas:**
 
-- Uso de CPU y memoria RAM durante la ejecución del juego, medido con psutil en Python.
-- Espacio en disco ocupado por el entorno completo (sistema operativo, aplicaciones y dependencias).
-- Tiempo de arranque del entorno.
-- Latencia y rendimiento de la aplicación medida a través de tiempos de respuesta en el juego.
+- Uso de CPU y memoria (medido con `psutil`)
+- Espacio en disco total ocupado
+- Tiempo de arranque del entorno
+- Latencia en la respuesta de la aplicación
 
-Se utilizaron herramientas estándar como psutil para monitorización, scripts Python personalizados para automatizar la recopilación de datos y Jupyter Notebook para análisis y generación de gráficos.
+**Herramientas:**
+
+- Python (`psutil`, `subprocess`, `time`)
+- Scripts personalizados de benchmarking
+- Docker (en Codespace) y VirtualBox
+- Matplotlib, Pandas y Jupyter Notebook para análisis y gráficos
+
+---
 
 ## 4. Resultados
 
-Los datos recopilados mostraron que:
+- Docker (en Codespace) tiene un tiempo de arranque significativamente menor que la VM.
+- Docker consume menos CPU y memoria promedio durante la ejecución.
+- Docker requiere mucho menos espacio en disco.
+- La latencia del juego fue ligeramente mejor en Docker.
 
-- El contenedor Docker tiene un tiempo de arranque significativamente menor que la VM.
-- Docker consume menos CPU y memoria promedio durante la ejecución del juego.
-- El tamaño en disco requerido por Docker es considerablemente menor que el de la VM, debido a la ausencia de un sistema operativo completo.
-- La latencia de la aplicación fue similar en ambos entornos, aunque con ligeras variaciones favorables para Docker.
+**Gráficos generados:**
 
-Los gráficos generados con Matplotlib reflejan claramente las diferencias en el uso de recursos y tiempos de ejecución.
+- Comparación Uso de CPU: TicTacToe VM vs Docker  
+- Comparación Uso de Memoria: TicTacToe VM vs Docker  
+- Promedio uso CPU y Memoria: VM vs Docker  
+
+---
 
 ## 5. Análisis: Fortalezas y debilidades
 
-### Máquina Virtual
+| Aspecto              | Máquina Virtual                        | Docker (en Codespace)                          |
+|----------------------|----------------------------------------|------------------------------------------------|
+| **Aislamiento**      | Fuerte, kernel separado y seguro       | Compartición del kernel, menor aislamiento     |
+| **Uso de recursos**  | Alto consumo de CPU, RAM y disco       | Bajo consumo, entorno ligero y eficiente       |
+| **Tiempo de arranque** | Más lento (segundos a minutos)         | Muy rápido (milisegundos a segundos)           |
+| **Portabilidad**     | Menos flexible, imágenes pesadas       | Alta portabilidad y despliegue ágil            |
+| **Seguridad**        | Aislamiento completo, más seguro       | Requiere configuración adicional               |
 
-**Ventajas:**
-
-- Aislamiento fuerte y completo, con kernel propio.
-- Mejor seguridad en entornos multiusuario.
-- Permite ejecutar distintos sistemas operativos.
-
-**Desventajas:**
-
-- Uso elevado de recursos.
-- Tiempo de inicio más lento.
-- Sobrecarga por virtualización del hardware.
-
-### Docker
-
-**Ventajas:**
-
-- Inicio casi instantáneo.
-- Bajo consumo de recursos.
-- Excelente para desarrollo, pruebas y despliegue continuo.
-
-**Desventajas:**
-
-- Aislamiento basado en kernel compartido, menos seguro.
-- Menor flexibilidad para distintos sistemas operativos.
+---
 
 ## 6. Conclusión: ¿Cuándo usar VM vs Docker?
 
-La elección entre VM y Docker depende del caso de uso:
+- **Usar VM** cuando se requiera un entorno aislado, ejecución de diferentes sistemas operativos o alta seguridad.
+- **Usar Docker** para desarrollo rápido, CI/CD, microservicios o cuando se priorice eficiencia y portabilidad.
 
-- Use máquinas virtuales cuando se necesite un aislamiento completo, ejecutar sistemas operativos diferentes o cuando la seguridad sea prioritaria.
-- Use Docker para entornos de desarrollo rápido, despliegues continuos, microservicios y cuando se requiera eficiencia en uso de recursos.
+Docker (en Codespace) demostró ser una solución eficiente y práctica para ejecutar aplicaciones ligeras como TicTacToe, mientras que las VMs siguen siendo preferibles en contextos con mayores requisitos de aislamiento y control.
 
-En este proyecto, Docker mostró ser una opción eficiente y práctica para aplicaciones ligeras, mientras que las VM ofrecen mayor seguridad y aislamiento, con un costo mayor en recursos.
+---
